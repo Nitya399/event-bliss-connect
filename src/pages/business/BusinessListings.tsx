@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useBusinesses } from '@/contexts/BusinessesContext';
 import { Business } from '@/types/auth';
 import BusinessCard from '@/components/business/BusinessCard';
@@ -7,16 +8,23 @@ import BusinessFilters, { BusinessFiltersState } from '@/components/business/Bus
 import Layout from '@/components/layout/Layout';
 
 const BusinessListings = () => {
+  const [searchParams] = useSearchParams();
   const { businesses, loading } = useBusinesses();
   const [filteredBusinesses, setFilteredBusinesses] = useState<Business[]>([]);
   
-  const [filters, setFilters] = useState<BusinessFiltersState>({
+  // Initialize filters state from search parameters (if provided from AI assistant)
+  const initialFilters: BusinessFiltersState = {
     search: '',
-    category: 'All',
-    location: '',
-    priceRange: [0, 10000],
+    category: searchParams.get('category') || 'All',
+    location: searchParams.get('location') || '',
+    priceRange: [
+      searchParams.get('minPrice') ? parseInt(searchParams.get('minPrice') as string) : 0,
+      searchParams.get('maxPrice') ? parseInt(searchParams.get('maxPrice') as string) : 10000
+    ],
     experienceYears: 0
-  });
+  };
+  
+  const [filters, setFilters] = useState<BusinessFiltersState>(initialFilters);
 
   // Apply filters when businesses load or filters change
   useEffect(() => {

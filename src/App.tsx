@@ -14,6 +14,7 @@ import Dashboard from "./pages/dashboard/Dashboard";
 import BusinessListings from "./pages/business/BusinessListings";
 import BusinessProfile from "./pages/business/BusinessProfile";
 import BusinessRegistration from "./pages/business/BusinessRegistration";
+import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,8 @@ const App = () => (
                 <Route path="/register" element={<Register />} />
                 <Route path="/businesses" element={<BusinessListings />} />
                 <Route path="/businesses/:id" element={<BusinessProfile />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/how-it-works" element={<About />} />
                 
                 {/* Protected Routes */}
                 <Route path="/dashboard" element={<Dashboard />} />
