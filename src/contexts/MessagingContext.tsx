@@ -127,7 +127,7 @@ export const MessagingProvider = ({ children }: { children: ReactNode }) => {
                   id: generateId(),
                   senderId: business.ownerId,
                   receiverId: user.id,
-                  content: 'Sure! We'd be happy to provide a quote. Could you tell us more about your event date, number of guests, and location?',
+                  content: "Sure! We'd be happy to provide a quote. Could you tell us more about your event date, number of guests, and location?",
                   timestamp: new Date(Date.now() - 43200000).toISOString(), // 12 hours ago
                   read: false,
                 },
