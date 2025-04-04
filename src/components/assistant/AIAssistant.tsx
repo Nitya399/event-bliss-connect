@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -39,17 +40,17 @@ interface SpeechRecognitionInterface extends EventTarget {
   interimResults: boolean;
   lang: string;
   maxAlternatives: number;
-  onaudioend: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onaudiostart: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onend: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onerror: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onnomatch: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
-  onsoundend: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onsoundstart: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onspeechend: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onspeechstart: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onaudioend: ((this: SpeechRecognitionInterface, ev: Event) => any) | null;
+  onaudiostart: ((this: SpeechRecognitionInterface, ev: Event) => any) | null;
+  onend: ((this: SpeechRecognitionInterface, ev: Event) => any) | null;
+  onerror: ((this: SpeechRecognitionInterface, ev: Event) => any) | null;
+  onnomatch: ((this: SpeechRecognitionInterface, ev: Event) => any) | null;
+  onresult: ((this: SpeechRecognitionInterface, ev: SpeechRecognitionEvent) => any) | null;
+  onsoundend: ((this: SpeechRecognitionInterface, ev: Event) => any) | null;
+  onsoundstart: ((this: SpeechRecognitionInterface, ev: Event) => any) | null;
+  onspeechend: ((this: SpeechRecognitionInterface, ev: Event) => any) | null;
+  onspeechstart: ((this: SpeechRecognitionInterface, ev: Event) => any) | null;
+  onstart: ((this: SpeechRecognitionInterface, ev: Event) => any) | null;
   start(): void;
   stop(): void;
   abort(): void;
