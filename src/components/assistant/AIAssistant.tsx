@@ -1,9 +1,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Mic, MicOff, Send, X, Loader2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { parseSearchQuery } from '@/utils/searchQueryParser';
@@ -68,6 +68,7 @@ interface AIAssistantProps {
 
 const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { businesses } = useBusinesses();
   const [query, setQuery] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -243,6 +244,9 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose }) => {
       <DialogContent className="sm:max-w-md md:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-center">AI Event Assistant</DialogTitle>
+          <DialogDescription className="text-center text-sm text-gray-500">
+            Ask me to find services for you or help navigate the platform
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col h-[400px]">
