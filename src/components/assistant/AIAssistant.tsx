@@ -211,6 +211,8 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose }) => {
         
         // Push response message and navigate after a delay
         setMessages(prev => [...prev, { type: 'assistant', content: response }]);
+        
+        // Always navigate to the businesses page regardless of current location
         setTimeout(() => {
           navigate(`/businesses?${searchParams.toString()}`);
           onClose();

@@ -106,7 +106,7 @@ const HeroSection = () => {
             <Button 
               onClick={() => navigate('/register?type=business')} 
               variant="outline"
-              className="border-2 border-white text-white hover:bg-white/20 transform transition-all duration-300 text-lg"
+              className="border-2 border-white text-white font-medium hover:bg-white/20 transform transition-all duration-300 text-lg"
               size="lg"
             >
               List Your Business
