@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Mic, MicOff, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,13 @@ export const AssistantInput: React.FC<AssistantInputProps> = ({
   isProcessing 
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  useEffect(() => {
+    // Focus the input when the component mounts
+    if (inputRef.current && !isProcessing) {
+      inputRef.current.focus();
+    }
+  }, [isProcessing]);
 
   return (
     <form onSubmit={handleSubmit} className="flex gap-2">

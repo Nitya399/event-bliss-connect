@@ -15,33 +15,44 @@ export const useSpeechRecognition = ({ onTranscript }: UseSpeechRecognitionProps
     if (typeof window !== 'undefined') {
       // Define the Speech Recognition API with proper type casting
       const SpeechRecognition = (window as any).SpeechRecognition || 
-                               (window as any).webkitSpeechRecognition as SpeechRecognitionConstructor;
+                               (window as any).webkitSpeechRecognition;
       
       if (SpeechRecognition) {
         recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = false;
-        recognitionRef.current.interimResults = false;
-        recognitionRef.current.lang = 'en-US';
-        
-        recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
-          const transcript = event.results[0][0].transcript;
-          onTranscript(transcript);
-        };
-        
-        recognitionRef.current.onerror = () => {
-          setIsListening(false);
-          toast.error("Couldn't access microphone. Please ensure you've granted permission.");
-        };
-        
-        recognitionRef.current.onend = () => {
-          setIsListening(false);
-        };
+        if (recognitionRef.current) {
+          recognitionRef.current.continuous = false;
+          recognitionRef.current.interimResults = false;
+          recognitionRef.current.lang = 'en-US';
+          
+          recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+            const transcript = event.results[0][0].transcript;
+            console.log("Speech recognition result:", transcript);
+            onTranscript(transcript);
+          };
+          
+          recognitionRef.current.onerror = (event: any) => {
+            console.error("Speech recognition error:", event);
+            setIsListening(false);
+            toast.error("Couldn't access microphone. Please ensure you've granted permission.");
+          };
+          
+          recognitionRef.current.onend = () => {
+            console.log("Speech recognition ended");
+            setIsListening(false);
+          };
+        }
+      } else {
+        console.warn("Speech Recognition not supported in this browser");
       }
     }
 
     return () => {
       if (recognitionRef.current) {
-        recognitionRef.current.abort();
+        try {
+          recognitionRef.current.abort();
+        } catch (error) {
+          console.error("Error aborting speech recognition:", error);
+        }
       }
     };
   }, [onTranscript]);
@@ -53,10 +64,16 @@ export const useSpeechRecognition = ({ onTranscript }: UseSpeechRecognitionProps
     }
 
     if (isListening) {
-      recognitionRef.current.stop();
+      try {
+        recognitionRef.current.stop();
+        console.log("Stopping speech recognition");
+      } catch (error) {
+        console.error("Error stopping speech recognition:", error);
+      }
     } else {
       try {
         recognitionRef.current.start();
+        console.log("Starting speech recognition");
         setIsListening(true);
       } catch (error) {
         console.error("Error starting speech recognition:", error);
