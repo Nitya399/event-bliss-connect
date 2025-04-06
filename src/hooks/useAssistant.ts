@@ -28,6 +28,7 @@ export const useAssistant = (onClose: () => void) => {
     try {
       // Parse the natural language query
       const params = parseSearchQuery(searchQuery);
+      console.log("Parsed search parameters:", params);
       
       // Small delay to simulate AI processing
       await new Promise(resolve => setTimeout(resolve, 800));
@@ -83,6 +84,7 @@ export const useAssistant = (onClose: () => void) => {
         
         // Always navigate to the businesses page regardless of current location
         setTimeout(() => {
+          console.log("Navigating to:", `/businesses?${searchParams.toString()}`);
           navigate(`/businesses?${searchParams.toString()}`);
           onClose();
         }, 1500);
@@ -93,6 +95,7 @@ export const useAssistant = (onClose: () => void) => {
       }
     } catch (error) {
       console.error('Error processing search query:', error);
+      toast.error("Sorry, I had trouble understanding that request");
       setMessages(prev => [...prev, { 
         type: 'assistant', 
         content: "Sorry, I had trouble processing your request. Please try again." 

@@ -67,7 +67,7 @@ const CtaSection = () => {
         <motion.div variants={itemVariants}>
           <Button 
             onClick={() => navigate('/register?type=business')}
-            className="bg-gradient-to-r from-gold to-gold-600 hover:from-gold-600 hover:to-gold text-white text-lg px-10 py-6 h-auto rounded-full shadow-lg hover:shadow-xl transform transition-all duration-300 hover:-translate-y-1 font-medium"
+            className="bg-gradient-to-r from-royal to-royal-700 hover:from-royal-600 hover:to-royal text-white text-lg px-10 py-6 h-auto rounded-full shadow-lg hover:shadow-xl transform transition-all duration-300 hover:-translate-y-1 font-medium"
           >
             Register Your Business
           </Button>
