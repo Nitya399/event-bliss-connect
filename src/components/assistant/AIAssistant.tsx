@@ -1,10 +1,65 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
+import { Mic, MicOff, Send, X, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { AssistantMessage, ProcessingIndicator } from './AssistantMessage';
-import { AssistantInput } from './AssistantInput';
-import { useAssistant } from '@/hooks/useAssistant';
-import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { parseSearchQuery } from '@/utils/searchQueryParser';
+import { useBusinesses } from '@/contexts/BusinessesContext';
+
+// Define SpeechRecognition interface
+interface SpeechRecognitionEvent extends Event {
+  results: {
+    [index: number]: {
+      [index: number]: {
+        transcript: string;
+        confidence: number;
+      };
+    };
+    item(index: number): SpeechRecognitionResult;
+    length: number;
+  };
+}
+
+interface SpeechRecognitionResult {
+  isFinal: boolean;
+  [index: number]: SpeechRecognitionAlternative;
+  length: number;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognitionInterface extends EventTarget {
+  continuous: boolean;
+  grammars: any;
+  interimResults: boolean;
+  lang: string;
+  maxAlternatives: number;
+  onaudioend: ((this: SpeechRecognitionInterface, ev: Event) => any) | null;
+  onaudiostart: ((this: SpeechRecognitionInterface, ev: Event) => any) | null;
+  onend: ((this: SpeechRecognitionInterface, ev: Event) => any) | null;
+  onerror: ((this: SpeechRecognitionInterface, ev: Event) => any) | null;
+  onnomatch: ((this: SpeechRecognitionInterface, ev: Event) => any) | null;
+  onresult: ((this: SpeechRecognitionInterface, ev: SpeechRecognitionEvent) => any) | null;
+  onsoundend: ((this: SpeechRecognitionInterface, ev: Event) => any) | null;
+  onsoundstart: ((this: SpeechRecognitionInterface, ev: Event) => any) | null;
+  onspeechend: ((this: SpeechRecognitionInterface, ev: Event) => any) | null;
+  onspeechstart: ((this: SpeechRecognitionInterface, ev: Event) => any) | null;
+  onstart: ((this: SpeechRecognitionInterface, ev: Event) => any) | null;
+  start(): void;
+  stop(): void;
+  abort(): void;
+}
+
+// Define a constructor interface
+interface SpeechRecognitionConstructor {
+  new (): SpeechRecognitionInterface;
+}
 
 interface AIAssistantProps {
   isOpen: boolean;
@@ -12,21 +67,60 @@ interface AIAssistantProps {
 }
 
 const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose }) => {
-  const { 
-    query, 
-    setQuery, 
-    isProcessing, 
-    messages, 
-    messagesEndRef, 
-    handleSubmit,
-    handleSpeechResult
-  } = useAssistant(onClose);
-  
-  const { isListening, toggleListening } = useSpeechRecognition({ 
-    onTranscript: handleSpeechResult 
-  });
-  
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { businesses } = useBusinesses();
+  const [query, setQuery] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [messages, setMessages] = useState<{type: 'user' | 'assistant', content: string}[]>([
+    { type: 'assistant', content: 'Hello! I can help you find event services. Try asking me something like "Find a caterer in Mumbai under 50000" or "I need a photographer in Delhi".' }
+  ]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<SpeechRecognitionInterface | null>(null);
+  
+  // Set up speech recognition
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Define the Speech Recognition API with proper type casting
+      const SpeechRecognition = (window as any).SpeechRecognition || 
+                               (window as any).webkitSpeechRecognition as SpeechRecognitionConstructor;
+      
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.interimResults = false;
+        recognitionRef.current.lang = 'en-US';
+        
+        recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+          const transcript = event.results[0][0].transcript;
+          setQuery(transcript);
+          handleSearch(transcript);
+        };
+        
+        recognitionRef.current.onerror = () => {
+          setIsListening(false);
+          toast.error("Couldn't access microphone. Please ensure you've granted permission.");
+        };
+        
+        recognitionRef.current.onend = () => {
+          setIsListening(false);
+        };
+      }
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
+    };
+  }, []);
+
+  // Scroll to bottom when messages update
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   // Focus input when dialog opens
   useEffect(() => {
@@ -36,6 +130,116 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose }) => {
       }, 100);
     }
   }, [isOpen]);
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      toast.error("Speech recognition is not supported in your browser.");
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (error) {
+        console.error("Error starting speech recognition:", error);
+        toast.error("Failed to start listening. Please try again.");
+      }
+    }
+  };
+
+  const handleSearch = async (searchQuery: string) => {
+    if (!searchQuery.trim()) return;
+    
+    setIsProcessing(true);
+    setMessages(prev => [...prev, { type: 'user', content: searchQuery }]);
+    
+    try {
+      // Parse the natural language query
+      const params = parseSearchQuery(searchQuery);
+      
+      // Small delay to simulate AI processing
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Generate response based on query parameters
+      let response = '';
+      
+      if (params.category || params.location || params.minPrice !== undefined || params.maxPrice !== undefined) {
+        // Build response containing parsed parameters
+        const parts = ["I'll look for"];
+        
+        if (params.category) {
+          parts.push(`${params.category} services`);
+        } else {
+          parts.push("all services");
+        }
+        
+        if (params.location) {
+          parts.push(`in ${params.location}`);
+        }
+        
+        if (params.minPrice !== undefined && params.maxPrice !== undefined) {
+          parts.push(`with prices between ₹${params.minPrice} and ₹${params.maxPrice}`);
+        } else if (params.minPrice !== undefined) {
+          parts.push(`with prices above ₹${params.minPrice}`);
+        } else if (params.maxPrice !== undefined) {
+          parts.push(`with prices under ₹${params.maxPrice}`);
+        }
+        
+        response = `${parts.join(" ")}. Redirecting you to the search results page.`;
+        
+        // Add the search parameters to the URL and navigate
+        const searchParams = new URLSearchParams();
+        
+        if (params.category) {
+          searchParams.append('category', params.category);
+        }
+        
+        if (params.location) {
+          searchParams.append('location', params.location);
+        }
+        
+        if (params.minPrice !== undefined) {
+          searchParams.append('minPrice', params.minPrice.toString());
+        }
+        
+        if (params.maxPrice !== undefined) {
+          searchParams.append('maxPrice', params.maxPrice.toString());
+        }
+        
+        // Push response message and navigate after a delay
+        setMessages(prev => [...prev, { type: 'assistant', content: response }]);
+        
+        // Always navigate to the businesses page regardless of current location
+        setTimeout(() => {
+          navigate(`/businesses?${searchParams.toString()}`);
+          onClose();
+        }, 1500);
+      } else {
+        // Generic response for queries we couldn't parse
+        response = "I'm not sure I understood what you're looking for. Could you try being more specific? For example, try asking for 'photographers in Mumbai' or 'caterer under 50000 in Delhi'.";
+        setMessages(prev => [...prev, { type: 'assistant', content: response }]);
+      }
+    } catch (error) {
+      console.error('Error processing search query:', error);
+      setMessages(prev => [...prev, { 
+        type: 'assistant', 
+        content: "Sorry, I had trouble processing your request. Please try again." 
+      }]);
+    } finally {
+      setIsProcessing(false);
+      setQuery('');
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (query.trim() && !isProcessing) {
+      handleSearch(query);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={() => onClose()}>
@@ -51,21 +255,62 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen, onClose }) => {
           {/* Messages container */}
           <div className="flex-1 overflow-y-auto mb-4 p-4 rounded-md bg-gray-50">
             {messages.map((message, index) => (
-              <AssistantMessage key={index} message={message} />
+              <div 
+                key={index} 
+                className={`mb-3 ${message.type === 'user' ? 'text-right' : ''}`}
+              >
+                <div 
+                  className={`inline-block px-3 py-2 rounded-lg max-w-[80%] ${
+                    message.type === 'user' 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-gray-200 text-gray-900'
+                  }`}
+                >
+                  {message.content}
+                </div>
+              </div>
             ))}
-            {isProcessing && <ProcessingIndicator />}
+            {isProcessing && (
+              <div className="mb-3">
+                <div className="inline-block px-3 py-2 bg-gray-200 text-gray-900 rounded-lg">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                </div>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
 
           {/* Input form */}
-          <AssistantInput 
-            query={query}
-            setQuery={setQuery}
-            isListening={isListening}
-            toggleListening={toggleListening}
-            handleSubmit={handleSubmit}
-            isProcessing={isProcessing}
-          />
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <Button
+              type="button"
+              variant={isListening ? "destructive" : "outline"}
+              size="icon"
+              onClick={toggleListening}
+              className="flex-shrink-0"
+              title={isListening ? "Stop listening" : "Start voice input"}
+            >
+              {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            </Button>
+            
+            <Input
+              ref={inputRef}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Ask me to find services for you..."
+              className="flex-1"
+              disabled={isProcessing}
+            />
+            
+            <Button 
+              type="submit" 
+              size="icon"
+              disabled={!query.trim() || isProcessing}
+              className="flex-shrink-0"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </form>
         </div>
       </DialogContent>
     </Dialog>
