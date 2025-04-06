@@ -17,7 +17,7 @@ export const AssistantMessage: React.FC<MessageProps> = ({ message }) => {
       <div 
         className={`inline-block px-3 py-2 rounded-lg max-w-[80%] ${
           message.type === 'user' 
-            ? 'bg-royal text-white' 
+            ? 'bg-primary text-primary-foreground' 
             : 'bg-gray-200 text-gray-900'
         }`}
       >

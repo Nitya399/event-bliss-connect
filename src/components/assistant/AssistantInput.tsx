@@ -24,7 +24,7 @@ export const AssistantInput: React.FC<AssistantInputProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   
   useEffect(() => {
-    // Focus the input when the component mounts or when processing completes
+    // Focus the input when the component mounts
     if (inputRef.current && !isProcessing) {
       inputRef.current.focus();
     }
@@ -39,7 +39,6 @@ export const AssistantInput: React.FC<AssistantInputProps> = ({
         onClick={toggleListening}
         className="flex-shrink-0"
         title={isListening ? "Stop listening" : "Start voice input"}
-        disabled={isProcessing}
       >
         {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
       </Button>

@@ -1,7 +1,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { SpeechRecognitionInterface, SpeechRecognitionEvent } from '@/types/speechRecognition';
+import { SpeechRecognitionInterface, SpeechRecognitionConstructor, SpeechRecognitionEvent } from '@/types/speechRecognition';
 
 interface UseSpeechRecognitionProps {
   onTranscript: (transcript: string) => void;
@@ -18,43 +18,31 @@ export const useSpeechRecognition = ({ onTranscript }: UseSpeechRecognitionProps
                                (window as any).webkitSpeechRecognition;
       
       if (SpeechRecognition) {
-        console.log("Speech Recognition is supported");
-        try {
-          recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current = new SpeechRecognition();
+        if (recognitionRef.current) {
+          recognitionRef.current.continuous = false;
+          recognitionRef.current.interimResults = false;
+          recognitionRef.current.lang = 'en-US';
           
-          if (recognitionRef.current) {
-            recognitionRef.current.continuous = false;
-            recognitionRef.current.interimResults = false;
-            recognitionRef.current.lang = 'en-US';
-            
-            recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
-              try {
-                console.log("Speech recognition raw result:", event);
-                const transcript = event.results[0][0].transcript;
-                console.log("Speech recognition transcript:", transcript);
-                onTranscript(transcript);
-              } catch (error) {
-                console.error("Error processing speech result:", error);
-              }
-            };
-            
-            recognitionRef.current.onerror = (event: any) => {
-              console.error("Speech recognition error:", event);
-              setIsListening(false);
-              toast.error("Couldn't access microphone. Please ensure you've granted permission.");
-            };
-            
-            recognitionRef.current.onend = () => {
-              console.log("Speech recognition ended");
-              setIsListening(false);
-            };
-          }
-        } catch (error) {
-          console.error("Error initializing speech recognition:", error);
+          recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+            const transcript = event.results[0][0].transcript;
+            console.log("Speech recognition result:", transcript);
+            onTranscript(transcript);
+          };
+          
+          recognitionRef.current.onerror = (event: any) => {
+            console.error("Speech recognition error:", event);
+            setIsListening(false);
+            toast.error("Couldn't access microphone. Please ensure you've granted permission.");
+          };
+          
+          recognitionRef.current.onend = () => {
+            console.log("Speech recognition ended");
+            setIsListening(false);
+          };
         }
       } else {
         console.warn("Speech Recognition not supported in this browser");
-        toast.error("Voice input is not supported in this browser. Please use text input instead.");
       }
     }
 
@@ -62,7 +50,6 @@ export const useSpeechRecognition = ({ onTranscript }: UseSpeechRecognitionProps
       if (recognitionRef.current) {
         try {
           recognitionRef.current.abort();
-          console.log("Speech recognition aborted on cleanup");
         } catch (error) {
           console.error("Error aborting speech recognition:", error);
         }
@@ -88,7 +75,6 @@ export const useSpeechRecognition = ({ onTranscript }: UseSpeechRecognitionProps
         recognitionRef.current.start();
         console.log("Starting speech recognition");
         setIsListening(true);
-        toast.success("Listening... speak now");
       } catch (error) {
         console.error("Error starting speech recognition:", error);
         toast.error("Failed to start listening. Please try again.");
