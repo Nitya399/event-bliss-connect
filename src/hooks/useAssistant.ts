@@ -1,13 +1,12 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { parseSearchQuery } from '@/utils/searchQueryParser';
 import { MessageType } from '@/components/assistant/AssistantMessage';
 
 export const useAssistant = (onClose: () => void) => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [query, setQuery] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [messages, setMessages] = useState<MessageType[]>([
@@ -78,7 +77,7 @@ export const useAssistant = (onClose: () => void) => {
           searchParams.append('maxPrice', params.maxPrice.toString());
         }
         
-        // Push response message
+        // Push response message and navigate after a delay
         setMessages(prev => [...prev, { type: 'assistant', content: response }]);
         
         // Always navigate to the businesses page regardless of current location
