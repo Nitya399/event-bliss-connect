@@ -22,11 +22,11 @@ const Layout = ({ children }: LayoutProps) => {
       <Footer />
       
       {/* AI Assistant floating button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-6 right-6">
         <Button 
           onClick={() => setIsAssistantOpen(true)}
           size="lg"
-          className="rounded-full w-12 h-12 p-0 shadow-lg hover:shadow-xl transition-all bg-royal text-white"
+          className="rounded-full w-12 h-12 p-0 shadow-lg hover:shadow-xl transition-all"
         >
           <MessageSquare className="w-5 h-5" />
         </Button>
